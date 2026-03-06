@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>個人網頁</title>
+  <style>
+    body {
+      font-family: "Microsoft JhengHei", Arial, sans-serif;
+      margin: 0;
+      background: linear-gradient(to right, #e0f7fa, #f1f8e9);
+      color: #333;
+    }
+    header {
+      text-align: center;
+      background: #ffffffcc;
+      padding: 30px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #2e7d32;
+      margin-bottom: 10px;
+    }
+    .info {
+      margin-top: 10px;
+      font-size: 16px;
+      color: #555;
+    }
+    section {
+      margin: 30px auto;
+      width: 80%;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    h2 {
+      border-bottom: 2px solid #81c784;
+      padding-bottom: 5px;
+      color: #388e3c;
+    }
+    ul {
+      list-style-type: square;
+      padding-left: 20px;
+    }
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      padding: 15px;
+      background: #ffffffcc;
+      color: #666;
+      font-size: 14px;
+      box-shadow: 0 -2px 6px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>蔡淯安</h1>
+    <div class="info">
+      <p>電話：0975-831-323</p>
+      <p>Email：s11410546@stu.edu.tw</p>
+    </div>
+  </header>
+
+  <section>
+    <h2>技能</h2>
+    <ul>
+      <li>程式設計</li>
+      <li>網頁開發</li>
+      <li>IT 技術文件撰寫</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>作品</h2>
+    <ul>
+      <li><a href="#">個人作品集範例</a></li>
+      <li><a href="#">技術筆記</a></li>
+    </ul>
+  </section>
+
+  <footer>
+    <p>© 2026/03/06 蔡淯安</p>
+  </footer>
+</body>
+</html>
