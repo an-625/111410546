@@ -1,0 +1,863 @@
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Threads Style Blog</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #000; color: #fff; min-height: 100vh; }
+    
+    .container { display: flex; max-width: 1400px; margin: 0 auto; }
+    
+    .sidebar-left { width: 280px; padding: 24px; position: fixed; height: 100vh; border-right: 1px solid #2e2e2e; display: flex; flex-direction: column; }
+    .sidebar-logo { font-size: 24px; font-weight: 700; margin-bottom: 32px; color: #fff; }
+    
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 8px; color: #a0a0a0; cursor: pointer; transition: all 0.2s; margin-bottom: 4px; }
+    .nav-item:hover { background: #1a1a1a; color: #fff; }
+    .nav-item.active { background: #1a1a1a; color: #fff; font-weight: 600; }
+    .nav-item svg { width: 24px; height: 24px; }
+    
+    .user-panel { margin-top: auto; padding-top: 24px; border-top: 1px solid #2e2e2e; }
+    .user-info { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; cursor: pointer; }
+    .user-info:hover { background: #1a1a1a; }
+    .avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0; overflow: hidden; background-size: cover; background-position: center; color: #fff; }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .user-name { font-weight: 600; }
+    .user-handle { color: #a0a0a0; font-size: 14px; }
+    
+    .main-center { flex: 1; margin-left: 280px; margin-right: 320px; border-right: 1px solid #2e2e2e; min-height: 100vh; }
+    
+    .header { padding: 16px 20px; border-bottom: 1px solid #2e2e2e; position: sticky; top: 0; background: #000; z-index: 100; display: flex; align-items: center; gap: 12px; }
+    .header h1 { font-size: 20px; font-weight: 700; }
+    .back-btn { background: none; border: none; color: #fff; cursor: pointer; padding: 8px; border-radius: 50%; display: none; }
+    .back-btn:hover { background: #1a1a1a; }
+    .back-btn.show { display: block; }
+    .back-btn svg { width: 20px; height: 20px; }
+    
+    .tabs { display: flex; border-bottom: 1px solid #2e2e2e; }
+    .tab { flex: 1; padding: 16px; text-align: center; color: #a0a0a0; cursor: pointer; position: relative; transition: all 0.2s; }
+    .tab:hover { color: #fff; }
+    .tab.active { color: #fff; }
+    .tab.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: #fff; }
+    
+    .profile-header { position: relative; display: none; }
+    .profile-bg { width: 100%; height: 150px; background: linear-gradient(135deg, #667eea, #764ba2); background-size: cover; background-position: center; }
+    .profile-avatar { width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 40px; position: absolute; bottom: -50px; left: 16px; border: 4px solid #000; overflow: hidden; background-size: cover; background-position: center; color: #fff; }
+    .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .profile-info { padding: 60px 16px 16px; }
+    .profile-name { font-weight: 700; font-size: 20px; }
+    .profile-handle { color: #a0a0a0; font-size: 14px; }
+    .profile-bio { margin-top: 12px; color: #a0a0a0; font-size: 14px; line-height: 1.5; white-space: pre-wrap; }
+    .profile-stats { display: flex; gap: 16px; margin-top: 12px; color: #a0a0a0; font-size: 14px; }
+    
+    .create-post { padding: 16px 20px; border-bottom: 1px solid #2e2e2e; }
+    .create-post .create-row { display: flex; gap: 12px; }
+    .create-post textarea { flex: 1; background: transparent; border: none; color: #fff; font-size: 16px; resize: none; outline: none; min-height: 60px; }
+    .create-post textarea::placeholder { color: #a0a0a0; }
+    .create-post .actions { display: flex; flex-direction: column; justify-content: flex-end; gap: 8px; }
+    .create-post .login-hint { color: #a0a0a0; font-size: 14px; padding: 8px 0; }
+    .btn-primary { background: #fff; color: #000; border: none; padding: 8px 16px; border-radius: 20px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+    .btn-primary:hover { opacity: 0.8; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    
+    .posts { padding: 0; }
+    .post { padding: 16px 20px; border-bottom: 1px solid #2e2e2e; }
+    .post:hover { background: #0a0a0a; }
+    .post-header { display: flex; gap: 12px; margin-bottom: 12px; }
+    .post-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; overflow: hidden; background-size: cover; background-position: center; color: #fff; cursor: pointer; }
+    .post-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .post-user { flex: 1; cursor: pointer; }
+    .post-user:hover .post-username { text-decoration: underline; }
+    .post-meta { display: flex; align-items: center; gap: 8px; }
+    .post-username { font-weight: 600; color: #fff; }
+    .post-time { color: #a0a0a0; font-size: 14px; }
+    .post-more { color: #a0a0a0; cursor: pointer; padding: 4px 8px; border-radius: 4px; }
+    .post-more:hover { background: #2e2e2e; }
+    
+    .post-content { font-size: 15px; line-height: 1.5; margin-bottom: 12px; white-space: pre-wrap; word-break: break-word; cursor: pointer; }
+    
+    .repost-info { background: #1a1a1a; border-radius: 8px; padding: 12px; margin-bottom: 12px; border-left: 3px solid #667eea; cursor: pointer; }
+    .repost-info:hover { background: #222; }
+    .repost-info .repost-header { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; color: #a0a0a0; font-size: 14px; }
+    .repost-info .repost-avatar { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 10px; color: #fff; overflow: hidden; }
+    .repost-info .repost-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .repost-info .repost-name { font-weight: 600; color: #fff; }
+    
+    .post-actions { display: flex; gap: 24px; color: #a0a0a0; }
+    .post-action { display: flex; align-items: center; gap: 6px; cursor: pointer; transition: color 0.2s; }
+    .post-action:hover { color: #fff; }
+    .post-action.active { color: #e91e63; }
+    .post-action svg { width: 20px; height: 20px; }
+    
+    .empty-state { text-align: center; padding: 60px 20px; color: #a0a0a0; }
+    .empty-state h2 { color: #fff; margin-bottom: 8px; }
+    
+    .sidebar-right { width: 320px; padding: 24px; position: fixed; right: 0; top: 0; height: 100vh; overflow-y: auto; }
+    .sidebar-right h3 { color: #a0a0a0; font-size: 14px; font-weight: 600; margin-bottom: 16px; text-transform: uppercase; }
+    
+    .section-card { background: #1a1a1a; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    .section-card h4 { font-size: 16px; margin-bottom: 12px; }
+    
+    .quick-post { margin-bottom: 16px; }
+    .quick-post textarea { width: 100%; background: #2e2e2e; border: none; border-radius: 8px; padding: 12px; color: #fff; resize: none; outline: none; min-height: 60px; font-size: 14px; }
+    .quick-post textarea::placeholder { color: #a0a0a0; }
+    .quick-post .btn { width: 100%; margin-top: 8px; }
+    
+    .mini-post { padding: 12px 0; border-bottom: 1px solid #2e2e2e; }
+    .mini-post:last-child { border-bottom: none; }
+    .mini-post-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; cursor: pointer; }
+    .mini-post-header:hover .mini-post-name { text-decoration: underline; }
+    .mini-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; color: #fff; overflow: hidden; }
+    .mini-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .mini-post-name { font-weight: 600; font-size: 14px; }
+    .mini-post-content { font-size: 13px; color: #a0a0a0; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: flex-start; padding-top: 100px; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: #1a1a1a; border-radius: 16px; padding: 24px; width: 90%; max-width: 500px; }
+    .modal h3 { margin-bottom: 16px; }
+    .modal input, .modal textarea { width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid #3e3e3e; background: #2e2e2e; color: #fff; margin-bottom: 12px; font-size: 14px; }
+    .modal input:focus, .modal textarea:focus { outline: none; border-color: #fff; }
+    .modal textarea { resize: vertical; min-height: 80px; }
+    .modal-btns { display: flex; gap: 12px; justify-content: flex-end; }
+    .modal-btns button { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; }
+    .btn-cancel { background: #3e3e3e; color: #fff; }
+    .btn-submit { background: #fff; color: #000; }
+    
+    .auth-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
+    .auth-modal.show { display: flex; }
+    .auth-box { background: #1a1a1a; border-radius: 16px; padding: 32px; width: 90%; max-width: 400px; }
+    .auth-box h2 { text-align: center; margin-bottom: 24px; }
+    .auth-box input { width: 100%; padding: 14px 16px; border-radius: 8px; border: 1px solid #3e3e3e; background: #2e2e2e; color: #fff; margin-bottom: 16px; font-size: 15px; }
+    .auth-box input:focus { outline: none; border-color: #fff; }
+    .auth-box button { width: 100%; padding: 14px; border-radius: 8px; border: none; background: #fff; color: #000; font-weight: 600; cursor: pointer; margin-bottom: 12px; }
+    .auth-box button:hover { opacity: 0.9; }
+    .auth-box .switch { background: transparent; color: #a0a0a0; }
+    .auth-box .switch:hover { color: #fff; }
+    .auth-error { color: #ff4444; text-align: center; margin-bottom: 12px; display: none; }
+    
+    .settings-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
+    .settings-modal.show { display: flex; }
+    .settings-box { background: #1a1a1a; border-radius: 16px; padding: 32px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+    .settings-box h2 { text-align: center; margin-bottom: 24px; }
+    .settings-box label { display: block; color: #a0a0a0; font-size: 14px; margin-bottom: 8px; }
+    .settings-box input[type="text"], .settings-box textarea { width: 100%; padding: 14px 16px; border-radius: 8px; border: 1px solid #3e3e3e; background: #2e2e2e; color: #fff; margin-bottom: 16px; font-size: 15px; }
+    .settings-box input[type="text"]:focus, .settings-box textarea:focus { outline: none; border-color: #fff; }
+    .settings-box textarea { resize: vertical; min-height: 60px; }
+    .settings-box button { width: 100%; padding: 14px; border-radius: 8px; border: none; background: #fff; color: #000; font-weight: 600; cursor: pointer; margin-bottom: 12px; }
+    .settings-box button:hover { opacity: 0.9; }
+    .settings-box .cancel-btn { background: #3e3e3e; color: #fff; }
+    
+    .preview-section { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
+    .preview-bg { width: 100%; height: 100px; border-radius: 8px; background: linear-gradient(135deg, #667eea, #764ba2); background-size: cover; background-position: center; position: relative; }
+    .preview-avatar { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 32px; position: absolute; bottom: -40px; left: 50%; transform: translateX(-50%); border: 4px solid #1a1a1a; overflow: hidden; background-size: cover; background-position: center; color: #fff; }
+    .preview-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .preview-info { margin-top: 50px; text-align: center; }
+    .preview-name { font-weight: 700; font-size: 18px; }
+    .preview-handle { color: #a0a0a0; font-size: 14px; }
+    .preview-bio { color: #a0a0a0; font-size: 14px; margin-top: 8px; }
+    
+    @media (max-width: 1200px) {
+      .sidebar-right { display: none; }
+      .main-center { margin-right: 0; }
+    }
+    
+    @media (max-width: 900px) {
+      .sidebar-left { width: 80px; padding: 16px; }
+      .sidebar-logo { display: none; }
+      .nav-item span { display: none; }
+      .nav-item { justify-content: center; padding: 14px; }
+      .user-info { justify-content: center; }
+      .user-name, .user-handle { display: none; }
+      .main-center { margin-left: 80px; }
+    }
+    
+    @media (max-width: 600px) {
+      .sidebar-left { display: none; }
+      .main-center { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <aside class="sidebar-left">
+      <div class="sidebar-logo">Threads</div>
+      
+      <nav>
+        <div class="nav-item active" id="navHome" onclick="goHome()">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073z"/></svg>
+          <span>首頁</span>
+        </div>
+        <div class="nav-item" id="navMy" onclick="switchTab('my')">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          <span>我的</span>
+        </div>
+      </nav>
+      
+      <div class="user-panel">
+        <div id="userPanel" class="user-info" onclick="showUserMenu()" style="display:none;">
+          <div class="avatar" id="userAvatar"></div>
+          <div>
+            <div class="user-name" id="userName"></div>
+            <div class="user-handle" id="userHandle"></div>
+          </div>
+        </div>
+        <div id="loginBtn" class="nav-item" onclick="showAuthModal()">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+          <span>登入</span>
+        </div>
+      </div>
+    </aside>
+    
+    <main class="main-center">
+      <div class="header">
+        <button class="back-btn" id="backBtn" onclick="goBack()">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+        </button>
+        <h1 id="pageTitle">首頁</h1>
+      </div>
+      
+      <div id="profileHeader" class="profile-header">
+        <div class="profile-bg" id="profileBg"></div>
+        <div class="profile-avatar" id="profileAvatar"></div>
+        <div class="profile-info">
+          <div class="profile-name" id="profileName"></div>
+          <div class="profile-handle" id="profileHandle"></div>
+          <div class="profile-bio" id="profileBio"></div>
+          <div class="profile-stats">
+            <span id="profilePostCount">0 貼文</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="tabs" id="mainTabs">
+        <div class="tab active" onclick="switchTab('home')">公共</div>
+        <div class="tab" onclick="switchTab('my')">個人</div>
+      </div>
+      
+      <div id="createPost" class="create-post">
+        <div class="create-row">
+          <div class="avatar post-avatar" id="createAvatar">?</div>
+          <textarea id="postContent" placeholder="在想什麼？" oninput="updatePostBtn()"></textarea>
+          <div class="actions">
+            <button class="btn-primary" id="postBtn" onclick="createPost()" disabled>發布</button>
+          </div>
+        </div>
+        <div id="loginHint" class="login-hint" style="display:none;">
+          <a href="#" onclick="showAuthModal(); return false;" style="color:#667eea;">登入</a> 以發布貼文
+        </div>
+      </div>
+      
+      <div id="posts" class="posts"></div>
+    </main>
+    
+    <aside class="sidebar-right">
+      <div class="quick-post section-card" id="quickPost" style="display:none;">
+        <h4>快速發布</h4>
+        <textarea id="quickPostContent" placeholder="在想什麼？"></textarea>
+        <button class="btn-primary btn" onclick="quickPost()">發布</button>
+      </div>
+      
+      <div class="section-card">
+        <h3>最新動態</h3>
+        <div id="recentPosts"></div>
+      </div>
+    </aside>
+  </div>
+  
+  <div id="postModal" class="modal-overlay">
+    <div class="modal">
+      <h3>貼文詳情</h3>
+      <div id="modalContent" style="white-space: pre-wrap; line-height: 1.6;"></div>
+      <div style="margin-top: 20px; text-align: right;">
+        <button class="btn-cancel" onclick="closePostModal()">關閉</button>
+      </div>
+    </div>
+  </div>
+  
+  <div id="authModal" class="auth-modal">
+    <div class="auth-box">
+      <h2 id="authTitle">登入</h2>
+      <div id="authError" class="auth-error"></div>
+      <input type="text" id="authUsername" placeholder="帳號">
+      <input type="password" id="authPassword" placeholder="密碼">
+      <button onclick="handleAuth()" id="authBtn">登入</button>
+      <button class="switch" onclick="toggleAuthMode()" id="authSwitch">還沒有帳號？註冊</button>
+      <button class="switch" onclick="closeAuthModal()" style="margin-top:8px;">取消</button>
+    </div>
+  </div>
+
+  <div id="settingsModal" class="settings-modal">
+    <div class="settings-box">
+      <h2>個人設定</h2>
+      
+      <div class="preview-section">
+        <div class="preview-bg" id="previewBg"></div>
+        <div class="preview-avatar" id="previewAvatar"></div>
+        <div class="preview-info">
+          <div class="preview-name" id="previewName">名稱</div>
+          <div class="preview-handle" id="previewHandle">@帳號</div>
+          <div class="preview-bio" id="previewBio"></div>
+        </div>
+      </div>
+      
+      <label>顯示名稱</label>
+      <input type="text" id="settingsDisplayName" placeholder="輸入顯示名稱" oninput="updatePreview()">
+      
+      <label>個人簡介</label>
+      <textarea id="settingsBio" placeholder="輸入個人簡介" oninput="updatePreview()"></textarea>
+      
+      <label>頭像圖片（輸入圖片網址）</label>
+      <input type="text" id="settingsAvatar" placeholder="https://example.com/avatar.jpg" oninput="updatePreview()">
+      
+      <label>背景圖片（輸入圖片網址）</label>
+      <input type="text" id="settingsBackground" placeholder="https://example.com/bg.jpg" oninput="updatePreview()">
+      
+      <button onclick="saveSettings()">儲存設定</button>
+      <button class="cancel-btn" onclick="logout(); closeSettingsModal();">登出</button>
+      <button class="cancel-btn" onclick="closeSettingsModal()">取消</button>
+    </div>
+  </div>
+
+  <script>
+    let currentUser = null;
+    let currentTab = 'home';
+    let currentView = 'home';
+    let viewingUserId = null;
+    let viewHistory = [];
+    let isRegisterMode = false;
+    let allPosts = [];
+
+    function getAuthHeader() {
+      if (currentUser) {
+        return 'Basic ' + btoa(currentUser.username + ':' + currentUser.password);
+      }
+      return null;
+    }
+
+    function getInitials(name) {
+      return name ? name.charAt(0).toUpperCase() : '?';
+    }
+
+    function getAvatarHtml(name, avatarUrl, size = 40) {
+      if (avatarUrl) {
+        return `<img src="${escapeHtml(avatarUrl)}" onerror="this.parentElement.textContent='${getInitials(name)}'">`;
+      }
+      return getInitials(name);
+    }
+
+    function formatTime(dateStr) {
+      const date = new Date(dateStr);
+      const now = new Date();
+      const diff = (now - date) / 1000;
+      if (diff < 60) return '剛剛';
+      if (diff < 3600) return Math.floor(diff/60) + '分鐘前';
+      if (diff < 86400) return Math.floor(diff/3600) + '小時前';
+      if (diff < 604800) return Math.floor(diff/86400) + '天前';
+      return date.toLocaleDateString('zh-TW');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    async function loadAllPosts() {
+      const res = await fetch('/api/posts');
+      allPosts = await res.json();
+    }
+
+    function renderPosts(posts) {
+      const container = document.getElementById('posts');
+      if (posts.length === 0) {
+        let emptyText = '還沒有任何貼文';
+        let emptyHint = '成為第一個發布的人！';
+        if (currentTab === 'my') {
+          emptyText = '還沒有貼文';
+          emptyHint = '開始發布你的第一篇貼文吧！';
+        }
+        if (currentView === 'profile') {
+          emptyText = '還沒有發布過貼文';
+          emptyHint = '';
+        }
+        container.innerHTML = `
+          <div class="empty-state">
+            <h2>${emptyText}</h2>
+            <p>${emptyHint}</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = posts.map(post => {
+        const displayName = post.display_name || post.username;
+        const avatarContent = getAvatarHtml(displayName, post.avatar);
+        const isOwner = currentUser && currentUser.id === post.user_id;
+        const repostInfo = post.repost_from_id ? getRepostInfo(post) : '';
+        
+        return `
+          <div class="post">
+            ${repostInfo}
+            <div class="post-header">
+              <div class="post-avatar" onclick="viewUser(${post.user_id})">${avatarContent}</div>
+              <div class="post-user" onclick="viewUser(${post.user_id})">
+                <div class="post-meta">
+                  <span class="post-username">${escapeHtml(displayName)}</span>
+                  <span class="post-time">${formatTime(post.created_at)}</span>
+                </div>
+              </div>
+              ${isOwner ? `
+                <div class="post-more" onclick="showPostMenu(${post.id})">⋯</div>
+              ` : ''}
+            </div>
+            <div class="post-content" onclick="viewPost(${post.id})">
+              ${escapeHtml(post.content)}
+            </div>
+            <div class="post-actions">
+              <div class="post-action" onclick="toggleRepost(${post.id})">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                <span>轉發</span>
+              </div>
+              <div class="post-action" onclick="viewPost(${post.id})">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z"/></svg>
+                <span>回覆</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateRecentPosts() {
+      const recent = allPosts.slice(0, 5);
+      const container = document.getElementById('recentPosts');
+      
+      if (recent.length === 0) {
+        container.innerHTML = '<div style="color:#a0a0a0;text-align:center;padding:20px;">暫無動態</div>';
+        return;
+      }
+      
+      container.innerHTML = recent.map(post => {
+        const displayName = post.display_name || post.username;
+        return `
+          <div class="mini-post">
+            <div class="mini-post-header" onclick="viewUser(${post.user_id})">
+              <div class="mini-avatar">${getAvatarHtml(displayName, post.avatar, 32)}</div>
+              <span class="mini-post-name">${escapeHtml(displayName)}</span>
+            </div>
+            <div class="mini-post-content" onclick="viewPost(${post.id})">${escapeHtml(post.content)}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function loadPosts() {
+      await loadAllPosts();
+      
+      let filtered = [...allPosts];
+      if (currentView === 'profile' && viewingUserId) {
+        filtered = allPosts.filter(p => p.user_id === viewingUserId);
+      } else if (currentTab === 'my') {
+        if (currentUser) {
+          filtered = allPosts.filter(p => p.user_id === currentUser.id);
+        } else {
+          filtered = [];
+        }
+      }
+      
+      renderPosts(filtered);
+      updateRecentPosts();
+    }
+
+    function getRepostInfo(post) {
+      if (!post.repost_from_id) return '';
+      const name = post.repost_username || '用戶';
+      const avatarContent = getAvatarHtml(name, post.repost_avatar, 24);
+      return `
+        <div class="repost-info" onclick="viewPost(${post.repost_from_id})">
+          <div class="repost-header">
+            <svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+            <span>轉發自</span>
+            <div class="repost-avatar" style="margin-left:8px;">${avatarContent}</div>
+            <span class="repost-name">${escapeHtml(name)}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    async function toggleRepost(postId) {
+      if (!currentUser) {
+        showAuthModal();
+        return;
+      }
+      
+      const res = await fetch('/api/posts', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': getAuthHeader()
+        },
+        body: JSON.stringify({ 
+          title: '轉發', 
+          content: '',
+          repost_from_id: postId 
+        })
+      });
+      
+      if (res.ok) {
+        loadPosts();
+      }
+    }
+
+    async function viewPost(id) {
+      const res = await fetch(`/api/posts/${id}`);
+      const post = await res.json();
+      const displayName = post.display_name || post.username;
+      document.getElementById('modalContent').innerHTML = `
+        <div style="display:flex;gap:12px;margin-bottom:16px;">
+          <div class="post-avatar" style="cursor:pointer;" onclick="viewUser(${post.user_id}); closePostModal();">${getAvatarHtml(displayName, post.avatar)}</div>
+          <div>
+            <div class="post-username" style="cursor:pointer;" onclick="viewUser(${post.user_id}); closePostModal();">${escapeHtml(displayName)}</div>
+            <div class="post-time">${formatTime(post.created_at)}</div>
+          </div>
+        </div>
+        <div style="white-space:pre-wrap;line-height:1.6;">${escapeHtml(post.content)}</div>
+      `;
+      document.getElementById('postModal').classList.add('show');
+    }
+
+    function closePostModal() {
+      document.getElementById('postModal').classList.remove('show');
+    }
+
+    document.getElementById('postModal').addEventListener('click', (e) => {
+      if (e.target.id === 'postModal') closePostModal();
+    });
+
+    async function viewUser(userId) {
+      viewHistory.push({ view: currentView, userId: viewingUserId, tab: currentTab });
+      
+      currentView = 'profile';
+      viewingUserId = userId;
+      
+      const res = await fetch(`/api/users/${userId}`);
+      if (!res.ok) return;
+      
+      const user = await res.json();
+      const displayName = user.display_name || user.username;
+      
+      document.getElementById('profileHeader').style.display = 'block';
+      document.getElementById('mainTabs').style.display = 'none';
+      document.getElementById('backBtn').classList.add('show');
+      document.getElementById('pageTitle').textContent = displayName;
+      
+      const bgEl = document.getElementById('profileBg');
+      if (user.background) {
+        bgEl.style.backgroundImage = `url(${escapeHtml(user.background)})`;
+      } else {
+        bgEl.style.backgroundImage = 'linear-gradient(135deg, #667eea, #764ba2)';
+      }
+      
+      const avatarEl = document.getElementById('profileAvatar');
+      avatarEl.innerHTML = getAvatarHtml(displayName, user.avatar);
+      
+      document.getElementById('profileName').textContent = displayName;
+      document.getElementById('profileHandle').textContent = '@' + user.username;
+      document.getElementById('profileBio').textContent = user.bio || '';
+      
+      const postsRes = await fetch(`/api/users/${userId}/posts`);
+      const posts = await postsRes.json();
+      document.getElementById('profilePostCount').textContent = posts.length + ' 貼文';
+      
+      renderPosts(posts);
+    }
+
+    function goBack() {
+      if (viewHistory.length > 0) {
+        const prev = viewHistory.pop();
+        currentView = prev.view;
+        viewingUserId = prev.userId;
+        currentTab = prev.tab;
+        
+        if (currentView === 'home') {
+          goHome();
+        } else if (currentView === 'profile' && viewingUserId) {
+          viewUser(viewingUserId);
+        }
+      }
+    }
+
+    function goHome() {
+      currentView = 'home';
+      viewingUserId = null;
+      currentTab = 'home';
+      viewHistory = [];
+      
+      document.getElementById('profileHeader').style.display = 'none';
+      document.getElementById('mainTabs').style.display = 'flex';
+      document.getElementById('backBtn').classList.remove('show');
+      document.getElementById('pageTitle').textContent = '首頁';
+      
+      document.getElementById('navHome').classList.add('active');
+      document.getElementById('navMy').classList.remove('active');
+      
+      loadPosts();
+    }
+
+    function switchTab(tab) {
+      if (currentView === 'profile') return;
+      
+      currentTab = tab;
+      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+      
+      if (tab === 'home') {
+        document.querySelector('.tab:first-child').classList.add('active');
+        document.getElementById('pageTitle').textContent = '首頁';
+        document.getElementById('navHome').classList.add('active');
+        document.getElementById('navMy').classList.remove('active');
+      } else {
+        document.querySelector('.tab:nth-child(2)').classList.add('active');
+        document.getElementById('pageTitle').textContent = '我的';
+        document.getElementById('navMy').classList.add('active');
+        document.getElementById('navHome').classList.remove('active');
+      }
+      
+      loadPosts();
+    }
+
+    function updatePostBtn() {
+      const content = document.getElementById('postContent').value.trim();
+      document.getElementById('postBtn').disabled = !content || !currentUser;
+    }
+
+    async function createPost() {
+      if (!currentUser) return;
+      const content = document.getElementById('postContent').value.trim();
+      if (!content) return;
+      
+      const res = await fetch('/api/posts', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': getAuthHeader()
+        },
+        body: JSON.stringify({ title: content.substring(0, 50), content })
+      });
+      
+      if (res.ok) {
+        document.getElementById('postContent').value = '';
+        updatePostBtn();
+        loadPosts();
+      }
+    }
+
+    async function quickPost() {
+      if (!currentUser) return;
+      const content = document.getElementById('quickPostContent').value.trim();
+      if (!content) return;
+      
+      const res = await fetch('/api/posts', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': getAuthHeader()
+        },
+        body: JSON.stringify({ title: content.substring(0, 50), content })
+      });
+      
+      if (res.ok) {
+        document.getElementById('quickPostContent').value = '';
+        loadPosts();
+      }
+    }
+
+    function showUserMenu() {
+      if (!currentUser) return;
+      showSettingsModal();
+    }
+
+    function showAuthModal() {
+      if (currentUser) {
+        showSettingsModal();
+        return;
+      }
+      document.getElementById('authModal').classList.add('show');
+      document.getElementById('authUsername').value = '';
+      document.getElementById('authPassword').value = '';
+      document.getElementById('authError').style.display = 'none';
+    }
+
+    function closeAuthModal() {
+      document.getElementById('authModal').classList.remove('show');
+    }
+
+    function toggleAuthMode() {
+      isRegisterMode = !isRegisterMode;
+      document.getElementById('authTitle').textContent = isRegisterMode ? '註冊' : '登入';
+      document.getElementById('authBtn').textContent = isRegisterMode ? '註冊' : '登入';
+      document.getElementById('authSwitch').textContent = isRegisterMode ? '已有帳號？登入' : '還沒有帳號？註冊';
+      document.getElementById('authError').style.display = 'none';
+    }
+
+    async function handleAuth() {
+      const username = document.getElementById('authUsername').value.trim();
+      const password = document.getElementById('authPassword').value;
+      
+      if (!username || !password) {
+        showError('請填寫所有欄位');
+        return;
+      }
+      
+      const url = isRegisterMode ? '/api/register' : '/api/login';
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok) {
+        currentUser = { ...data, password: password };
+        localStorage.setItem('blog_user', JSON.stringify(currentUser));
+        closeAuthModal();
+        updateUserUI();
+        loadPosts();
+      } else {
+        showError(data.error);
+      }
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('authError');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    function logout() {
+      currentUser = null;
+      localStorage.removeItem('blog_user');
+      updateUserUI();
+      loadPosts();
+    }
+
+    function showSettingsModal() {
+      document.getElementById('settingsModal').classList.add('show');
+      document.getElementById('settingsDisplayName').value = currentUser?.display_name || currentUser?.username || '';
+      document.getElementById('settingsBio').value = currentUser?.bio || '';
+      document.getElementById('settingsAvatar').value = currentUser?.avatar || '';
+      document.getElementById('settingsBackground').value = currentUser?.background || '';
+      updatePreview();
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settingsModal').classList.remove('show');
+    }
+
+    function updatePreview() {
+      const name = document.getElementById('settingsDisplayName').value || currentUser?.username || '名稱';
+      const bio = document.getElementById('settingsBio').value || '';
+      const avatar = document.getElementById('settingsAvatar').value;
+      const background = document.getElementById('settingsBackground').value;
+      
+      document.getElementById('previewName').textContent = name;
+      document.getElementById('previewHandle').textContent = '@' + (currentUser?.username || 'user');
+      document.getElementById('previewBio').textContent = bio;
+      
+      const avatarEl = document.getElementById('previewAvatar');
+      if (avatar) {
+        avatarEl.innerHTML = `<img src="${escapeHtml(avatar)}" onerror="this.parentElement.textContent='${getInitials(name)}'">`;
+      } else {
+        avatarEl.textContent = getInitials(name);
+      }
+      
+      const bgEl = document.getElementById('previewBg');
+      if (background) {
+        bgEl.style.backgroundImage = `url(${escapeHtml(background)})`;
+      } else {
+        bgEl.style.backgroundImage = 'linear-gradient(135deg, #667eea, #764ba2)';
+      }
+    }
+
+    async function saveSettings() {
+      if (!currentUser) return;
+      
+      const display_name = document.getElementById('settingsDisplayName').value;
+      const bio = document.getElementById('settingsBio').value;
+      const avatar = document.getElementById('settingsAvatar').value;
+      const background = document.getElementById('settingsBackground').value;
+      
+      const res = await fetch('/api/user', {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': getAuthHeader()
+        },
+        body: JSON.stringify({ display_name, bio, avatar, background })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        currentUser = { ...currentUser, ...data };
+        localStorage.setItem('blog_user', JSON.stringify(currentUser));
+        closeSettingsModal();
+        updateUserUI();
+        loadPosts();
+      }
+    }
+
+    function updateUserUI() {
+      const panel = document.getElementById('userPanel');
+      const loginBtn = document.getElementById('loginBtn');
+      const createPostEl = document.getElementById('createPost');
+      const loginHint = document.getElementById('loginHint');
+      const createAvatar = document.getElementById('createAvatar');
+      const quickPost = document.getElementById('quickPost');
+      
+      if (currentUser) {
+        panel.style.display = 'flex';
+        loginBtn.style.display = 'none';
+        createPostEl.classList.add('show');
+        loginHint.style.display = 'none';
+        quickPost.style.display = 'block';
+        
+        const displayName = currentUser.display_name || currentUser.username;
+        const avatarEl = document.getElementById('userAvatar');
+        avatarEl.innerHTML = getAvatarHtml(displayName, currentUser.avatar);
+        
+        document.getElementById('userName').textContent = displayName;
+        document.getElementById('userHandle').textContent = '@' + currentUser.username;
+        
+        createAvatar.innerHTML = getAvatarHtml(displayName, currentUser.avatar);
+      } else {
+        panel.style.display = 'none';
+        loginBtn.style.display = 'flex';
+        loginHint.style.display = 'block';
+        quickPost.style.display = 'none';
+        createAvatar.textContent = '?';
+      }
+      updatePostBtn();
+    }
+
+    async function init() {
+      const saved = localStorage.getItem('blog_user');
+      if (saved) {
+        currentUser = JSON.parse(saved);
+        const res = await fetch('/api/user', {
+          headers: { 'Authorization': getAuthHeader() }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          currentUser = { ...currentUser, ...data };
+          localStorage.setItem('blog_user', JSON.stringify(currentUser));
+        }
+      }
+      updateUserUI();
+      loadPosts();
+    }
+
+    init();
+  </script>
+</body>
+</html>
