@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>霓虹貪吃蛇</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <h1>🐍 霓虹貪吃蛇排行榜 🐍</h1>
+
+    <div class="game-container">
+
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+
+        <div class="side-panel">
+
+            <h2>目前分數</h2>
+            <p id="score">0</p>
+
+            <button onclick="startGame()">
+                開始遊戲
+            </button>
+
+            <h2>排行榜 TOP 10</h2>
+
+            <ol id="leaderboard"></ol>
+
+            <div class="tip">
+                WASD / 方向鍵控制<br>
+                Enter 開始遊戲
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="game.js"></script>
+
+</body>
+</html>
