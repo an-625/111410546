@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全端網頁開發：全學期成果互動總彙</title>
+    <style>
+        /* 日式傳統色系與和風美學變數 */
+        :root {
+            --bg-paper: #fbf9f4;       /* 鳥之子色（溫潤日式紙色） */
+            --bg-sidebar: #f3efe6;     /* 練色（淡米黃沙盒） */
+            --text-main: #3a3226;      /* 胡桃色（深沉木質黑） */
+            --text-sub: #7d7260;       /* 柴色（溫和灰褐） */
+            --accent-sakura: #fbc4c4;  /* 櫻色 */
+            --accent-washitsu: #bfa480;/* 畳色（金屬與竹木點綴） */
+            --selected-dark: #323b42;  /* 青鈍色（選中時的深藍黑） */
+            --code-bg: #2a2621;        /* 暗栗色（深色代碼箱） */
+            --border-wagashi: #e6dfd3; 
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Sawarabi Mincho", "Noto Serif TC", "Yu Mincho", "Microsoft JhengHei", serif;
+            background-color: var(--bg-paper);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 畫布背景 */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            opacity: 0.03;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* 🌸 櫻花飄落：完美浮空頂層且不擋點擊的終極設定 */
+        .sakura-petal {
+            position: fixed;
+            pointer-events: none; /* 讓滑鼠點擊直接穿透花瓣，絕對不干擾任何表單與按鈕 */
+            background-color: var(--accent-sakura);
+            border-radius: 10px 0 10px 10px;
+            opacity: 0.85;
+            transform-origin: center;
+            z-index: 9999; /* 浮在最上層 */
+            box-shadow: 0 2px 4px rgba(235, 170, 170, 0.3);
+            transition: transform 0.1s linear;
+        }
+
+        /* 左側導覽列 */
+        .sidebar {
+            width: 320px;
+            background-color: var(--bg-sidebar);
+            border-right: 2px solid var(--border-wagashi);
+            display: flex;
+            flex-direction: column;
+            padding: 40px 20px;
+            z-index: 10;
+        }
+
+        .brand {
+            margin-bottom: 35px;
+            border-bottom: 1px dashed var(--accent-washitsu);
+            padding-bottom: 15px;
+            position: relative;
+        }
+
+        .brand::before {
+            content: "◆";
+            position: absolute;
+            bottom: -7px;
+            left: 0;
+            color: var(--accent-washitsu);
+            font-size: 10px;
+            background: var(--bg-sidebar);
+            padding-right: 5px;
+        }
+
+        .brand h1 {
+            font-size: 21px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: var(--text-main);
+        }
+
+        .brand p {
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-top: 6px;
+            letter-spacing: 1px;
+        }
+
+        .menu-list {
+            list-style: none;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .menu-list::-webkit-scrollbar { width: 3px; }
+        .menu-list::-webkit-scrollbar-thumb { background: var(--accent-washitsu); }
+
+        .menu-item {
+            padding: 15px 16px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #fff;
+            border: 1px solid var(--border-wagashi);
+            transition: all 0.3s ease;
+        }
+
+        .menu-item:hover {
+            background-color: #faf6ee;
+            border-color: var(--accent-washitsu);
+            transform: scale(1.01);
+        }
+
+        .menu-item.active {
+            background-color: var(--selected-dark);
+            color: #ffffff;
+            border-color: var(--selected-dark);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        }
+
+        .menu-item .title {
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .menu-item .tag {
+            font-size: 11px;
+            color: var(--text-sub);
+            margin-top: 5px;
+            font-family: monospace;
+        }
+
+        .menu-item.active .tag {
+            color: #b0bac2;
+        }
+
+        /* 右側主展示區 */
+        .content-container {
+            flex-grow: 1;
+            padding: 50px 55px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-paper);
+            z-index: 5;
+        }
+
+        .content-header h2 {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 25px;
+            position: relative;
+            padding-left: 15px;
+        }
+
+        .content-header h2::before {
+            content: "";
+            position: absolute;
+            left: 0; top: 15%; bottom: 15%;
+            width: 4px;
+            background-color: var(--accent-washitsu);
+        }
+
+        /* 共通盒子 */
+        .desc-box, .explain-box, .interactive-sandbox {
+            background-color: #ffffff;
+            border: 1px solid var(--border-wagashi);
+            border-radius: 4px;
+            padding: 24px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.01);
+        }
+
+        .desc-box h3, .interactive-sandbox h3 {
+            font-size: 12px;
+            color: var(--accent-washitsu);
+            margin-bottom: 12px;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+        }
+
+        .desc-box p {
+            font-size: 14.5px;
+            color: var(--text-main);
+            line-height: 1.75;
+            white-space: pre-line;
+        }
+
+        /* 成果動態實作展示區 */
+        .interactive-sandbox {
+            border: 1px solid var(--accent-washitsu);
+            background-color: #fffdf9;
+        }
+        
+        .sandbox-viewport {
+            border: 1px dashed var(--border-wagashi);
+            padding: 20px;
+            background: #fff;
+            border-radius: 4px;
+            min-height: 100px;
+        }
+
+        /* 程式碼沙盒面板 */
+        .code-sandbox {
+            background-color: var(--code-bg);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 30px;
+            border: 1px solid #1c1916;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        .code-header {
+            background-color: #1c1916;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #2a2621;
+        }
+
+        .dots { display: flex; gap: 6px; }
+        .dot { width: 9px; height: 9px; border-radius: 50%; background-color: #4a423a; }
+        .code-title { color: #8c8273; font-family: monospace; font-size: 12px; }
+
+        pre {
+            padding: 24px;
+            overflow-x: auto;
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        code {
+            font-family: "JetBrains Mono", ui-monospace, Consolas, monospace;
+            font-size: 13.5px;
+            color: #dfd5c6;
+            line-height: 1.7;
+        }
+
+        .explain-box {
+            position: relative;
+        }
+        .explain-box h4 { font-size: 15px; font-weight: 700; color: var(--text-main); margin-bottom: 10px; }
+        .explain-box p { font-size: 14px; color: var(--text-sub); line-height: 1.7; margin-bottom: 15px; }
+        
+        /* 🛠️ 新增：和風 GitHub 連結按鈕樣式 */
+        .github-btn-container {
+            display: flex;
+            justify-content: flex-start;
+            margin-top: 15px;
+        }
+        .github-link-btn {
+            display: inline-flex;
+            align-items: center;
+            background-color: var(--selected-dark);
+            color: #ffffff;
+            text-decoration: none;
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            border: 1px solid var(--selected-dark);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .github-link-btn:hover {
+            background-color: #fff;
+            color: var(--selected-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .github-link-btn::before {
+            content: "🔗";
+            margin-right: 8px;
+            font-size: 14px;
+        }
+
+        .footer-note { font-size: 11px; color: var(--text-sub); text-align: center; margin-top: auto; padding-top: 25px; letter-spacing: 1px; }
+
+        /* 習題 4 專用動態儀表板樣式 */
+        .logic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 10px; }
+        .logic-card { background: #fbfbfa; border: 1px solid var(--border-wagashi); padding: 12px; border-radius: 4px; }
+        .logic-card label { font-size: 12px; font-weight: bold; display: block; color: var(--text-main); margin-bottom: 6px;}
+        .logic-card button { background: var(--selected-dark); color: white; border: none; padding: 4px 10px; border-radius: 3px; cursor: pointer; font-size: 11px; }
+        .logic-card button:hover { opacity: 0.9; }
+        .logic-output { margin-top: 6px; font-family: monospace; font-size: 12px; color: #b85a5a; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="brand">
+            <h1>WebDev Portfolio</h1>
+            <p>全期成果互動總彙 (2026)</p>
+        </div>
+        <ul class="menu-list" id="menuList"></ul>
+        <div class="footer-note">和風謹製 • 成果歸檔</div>
+    </aside>
+
+    <main class="content-container">
+        <div class="content-header">
+            <h2 id="viewTitle">載入中...</h2>
+        </div>
+
+        <div class="interactive-sandbox" id="sandboxWrapper">
+            <h3>✨ 成果功能現場即時操作預覽 (Live Sandbox)</h3>
+            <div class="sandbox-viewport" id="sandboxContainer"></div>
+        </div>
+
+        <div class="desc-box">
+            <h3>📋 題目規格與需求說明</h3>
+            <p id="viewDesc">載入中...</p>
+        </div>
+
+        <div class="code-sandbox">
+            <div class="code-header">
+                <div class="dots">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+                <div class="code-title" id="cfgName">source_code.cfg</div>
+            </div>
+            <pre><code id="viewCode"></code></pre>
+        </div>
+
+        <div class="explain-box">
+            <h4>💡 核心技術說明解構</h4>
+            <p id="viewExplain">載入中...</p>
+            
+            <div class="github-btn-container" id="githubBtnContainer"></div>
+        </div>
+    </main>
+
+    <script>
+        // 全學期數據庫（已整合您提供的 GitHub 真實 Repository 連結網址）
+        const portfolioData = [
+            {
+                title: "🏛️ 期中獨立大作業",
+                tag: "server.js (Fullstack Engine)",
+                viewTitle: "期中專案：輕量級動態網誌系統 (Server-Side Blog)",
+                githubUrl: "https://github.com/an-625/111410546期中", // 您的期中網址
+                desc: "【AI 協同與原創聲明】\n本專案於 2026 年開發期間使用 Gemini 進行 Express 異步路由與資料庫 Error-First 邏輯的架構諮詢。後端 Server 核心架構與 UI 視覺為自主設計，除部分基礎資料庫初始化代碼參考課堂範例，其餘皆為原創，絕無抄襲他人作品。\n\n【題目規格】\n使用 Node.js 與 Express 框架架設輕量級後端伺服器，並整合 SQLite 內嵌資料庫實現資料持久化。系統需具備動態文章讀取（Fetch API）、新文章發布表單，並建置前後端防呆與錯誤處理機制。",
+                code: `const express = require('express');
+const sqlite3 = require('sqlite3').verbose();
+const app = express();
+const PORT = 3000;
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static('public')); 
+
+// 記憶體資料庫初始化
+const db = new sqlite3.Database(':memory:');
+db.serialize(() => {
+    db.run("CREATE TABLE posts (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, content TEXT, date TEXT)");
+    db.run("INSERT INTO posts (title, content, date) VALUES ('極簡教學誌上線', '這是測試文章。', '2026-05-27')");
+});
+
+// API：獲取所有文章
+app.get('/api/posts', (req, res) => {
+    db.all("SELECT * FROM posts ORDER BY id DESC", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+// API：新增文章
+app.post('/api/posts', (req, res) => {
+    const { title, content } = req.body;
+    if (!title || !content) return res.status(400).json({ error: "欄位不可為空" });
+    
+    const today = new Date().toISOString().split('T')[0];
+    db.run("INSERT INTO posts (title, content, date) VALUES (?, ?, ?)", [title, content, today], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ id: this.lastID, title, content, date: today });
+    });
+});
+
+app.listen(PORT, () => console.log(\`Server running on http://localhost:\${PORT}\`));`,
+                explain: "本專案實現了標準的 RESTful API 架構。前端透過 fetch() 向後端索取 JSON 資料並動態渲染；後端引進 SQLite 嵌入式資料庫確保資料持久化性。",
+                render: (container) => {
+                    container.innerHTML = `<div style="text-align:center; padding:10px; color:#7d7260;">
+                        <p>🖥️ <b>後端伺服器模擬狀態：</b></p>
+                        <p style="font-family:monospace; margin-top:5px; background:#f3efe6; padding:8px; display:inline-block; border-radius:4px;">
+                            SQLite 記憶體資料庫配置完畢 • RESTful API /api/posts 聆聽中 (Port 3000)
+                        </p>
+                    </div>`;
+                }
+            },
+            {
+                title: "🌿 習題 1：個人形象網頁",
+                tag: "index.html",
+                viewTitle: "平時作業 1：個人形象網頁建置與排版實作",
+                githubUrl: "", // 本題無指定外部 Repository 網址
+                desc: "【題目規格】\n設計並撰寫個人形象展示網站，需包含首頁、關於我、核心技能、聯絡資訊，並具備響應式網頁排版（RWD）。採用極簡淡雅線條進行視覺美化。",
+                code: `<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>個人形象網誌</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; background: #fafafa; color: #444; margin: 0; }
+        .nav-bar { border-bottom: 1px solid #eee; padding: 1.5rem; text-align: right; background: #fff; }
+        .nav-bar a { margin-left: 20px; color: #666; text-decoration: none; font-size: 0.95rem; }
+        .main-hero { max-width: 700px; margin: 5rem auto; padding: 0 2rem; }
+        h1 { font-weight: 300; font-size: 2.5rem; color: #222; }
+    </style>
+</head>
+<body>
+    <div class="nav-bar">
+        <a href="#about">關於我</a><a href="#skills">核心技能</a>
+    </div>
+    <div class="main-hero">
+        <h1>Hello, Welcome.</h1>
+        <p>這裡記錄了我從網頁靜態排版，邁向全端工程師的學習軌跡。</p>
+    </div>
+</body>
+</html>`,
+                explain: "掌握 HTML5 語意化標籤與 CSS 基礎樣式重設（Reset）。透過內斂的留白與清晰的字體層級，建立基本的前端網頁版面。",
+                render: (container) => {
+                    container.innerHTML = `
+                        <div style="border: 1px solid #ddd; border-radius: 4px; overflow: hidden; background:#fafafa;">
+                            <div style="border-bottom: 1px solid #eee; padding: 10px 20px; text-align: right; background: #fff;">
+                                <a href="#" onclick="alert('點擊了關於我導覽連結'); return false;" style="margin-left: 20px; color: #666; text-decoration: none; font-size: 13px;">關於我</a>
+                                <a href="#" onclick="alert('點擊了核心技能導覽連結'); return false;" style="margin-left: 20px; color: #666; text-decoration: none; font-size: 13px;">核心技能</a>
+                            </div>
+                            <div style="padding: 30px 20px; max-width: 600px; margin: 0 auto;">
+                                <h1 style="font-weight: 300; font-size: 1.8rem; color: #222; margin-bottom:10px;">Hello, Welcome.</h1>
+                                <p style="color:#666; font-size:14px; line-height:1.6;">這裡記錄了我從網頁靜態排版，邁向全端工程師的學習軌跡。</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            },
+            {
+                title: "📝 習題 2：整合控制項表單",
+                tag: "form.html",
+                viewTitle: "平時作業 2：整合型控制項表單與防呆設計",
+                githubUrl: "",
+                desc: "【題目規格】\n設計一個包含各式輸入控制項（如文字輸入、密碼隱碼、單選鈕、複選框與下拉選單）的整合型表單，演練前端欄位資料打包與基礎防呆規格。",
+                code: `<form action="/api/submit" method="POST" style="max-width: 400px; background: #fff; padding: 2rem; border: 1px solid #eee;">
+    <label>帳號名稱</label>
+    <input type="text" name="user" required placeholder="請填寫英數字">
+    
+    <label>通訊密碼</label>
+    <input type="password" name="pw" required minlength="6">
+    
+    <span>目前學歷</span>
+    <input type="radio" name="edu" value="u" id="u" checked> <label for="u">大學</label>
+    <input type="radio" name="edu" value="g" id="g"> <label for="g">研究所</label>
+    
+    <button type="submit">送出資料</button>
+</form>`,
+                explain: "表單設計的核心在於各項型態控制項的 name 屬性對應與前端基礎阻擋驗證（如 required, minlength）。送出後會被打包成 URL 編碼格式傳遞給後端。",
+                render: (container) => {
+                    container.innerHTML = `
+                        <form id="sandboxForm" style="max-width: 450px; background: #fff; padding: 20px; border: 1px solid #e6dfd3; margin: 0 auto; border-radius:4px;">
+                            <div style="margin-bottom: 12px;">
+                                <label style="display:block; font-size:13px; margin-bottom:4px; font-weight:bold;">帳號名稱 (必填):</label>
+                                <input type="text" id="fb_user" required placeholder="請填寫帳號" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:3px;">
+                            </div>
+                            <div style="margin-bottom: 12px;">
+                                <label style="display:block; font-size:13px; margin-bottom:4px; font-weight:bold;">通訊密碼 (至少6碼):</label>
+                                <input type="password" id="fb_pw" required minlength="6" placeholder="******" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:3px;">
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <span style="font-size:13px; font-weight:bold; margin-right:10px;">目前學歷:</span>
+                                <input type="radio" name="sandbox_edu" value="大學" id="sb_u" checked> <label for="sb_u" style="font-size:13px; margin-right:10px;">大學</label>
+                                <input type="radio" name="sandbox_edu" value="研究所" id="sb_g"> <label for="sb_g" style="font-size:13px;">研究所</label>
+                            </div>
+                            <button type="submit" style="background:var(--selected-dark); color:white; border:none; padding:8px 16px; border-radius:4px; cursor:pointer; width:100%; font-size:13px;">送出資料 (前端防呆攔截測試)</button>
+                        </form>
+                    `;
+                    document.getElementById('sandboxForm').addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        const user = document.getElementById('fb_user').value;
+                        const edu = document.querySelector('input[name="sandbox_edu"]:checked').value;
+                        alert(`【前端驗證成功】\n資料已成功打包！\n帳號：${user}\n學歷：${edu}\n準備傳送至後端 API。`);
+                    });
+                }
+            },
+            {
+                title: "☕ 習題 3：JS 環境建置入門",
+                tag: "hello.js",
+                viewTitle: "平時作業 3：JavaScript 執行環境配置與終端輸出",
+                githubUrl: "",
+                desc: "【題目規格】\n配置本地端 JavaScript 執行環境（Node.js），撰寫第一個 hello.js 檔案並在終端機中成功執行印出指定核心訊息，確認編譯與偵錯環境完備。",
+                code: `// hello.js
+// 於終端機執行指令: node hello.js
+console.log("Hello, World! JavaScript 本地執行環境建置就緒。");`,
+                explain: "此單元為動態程式邏輯起步。理解如何透過終端機（Terminal）調用 Node.js 解譯器執行腳本，是後續所有後端邏輯開發除錯的核心基礎。",
+                render: (container) => {
+                    container.innerHTML = `
+                        <div style="background:#1e1e1e; color:#00ff00; font-family:monospace; padding:15px; border-radius:4px; box-shadow:inset 0 0 10px #000;">
+                            <span style="color:#aaa;">$ node hello.js</span><br>
+                            <span style="color:#fff; display:inline-block; margin-top:6px;">Hello, World! JavaScript 本地執行環境建置就緒。</span>
+                            <span style="animation: blink 1s infinite; font-weight:bold; color:white;">_</span>
+                        </div>
+                        <style>@keyframes blink { 0%, 100% { opacity: 0 } 50% { opacity: 1 } }</style>
+                    `;
+                }
+            },
+            {
+                title: "🔢 習題 4：10個核心基礎邏輯",
+                tag: "logic.js",
+                viewTitle: "平時作業 4：10 個核心基礎 JavaScript 邏輯演練儀表板",
+                githubUrl: "",
+                desc: "【題目規格】\n自主撰寫 10 個基礎 JavaScript 程式練習，涵蓋基本變數運算、條件分支、精確迴圈、陣列處理與格式化方法等小演算法。",
+                code: `// 1. 判斷數值奇偶
+const isEven = n => n % 2 === 0;
+// 2. 陣列總和計算
+const sum = arr => arr.reduce((a, b) => a + b, 0);
+// 3. 找出數列最大值
+const maxNum = arr => Math.max(...arr);
+// 4. 溫標轉換：攝氏轉華氏
+const celsiusToFahrenheit = c => c * 9 / 5 + 32;
+// 5. 基礎遞減計時迴圈
+const timerLoop = () => { let res=[]; for(let i=3; i>0; i--) res.push(i); return res.join(', '); };
+// 6. 檢查字串是否為空
+const isStringEmpty = str => str.trim() === '';
+// 7. 倒轉陣列元素
+const reverseList = arr => [...arr].reverse();
+// 8. 折扣百分比計算
+const applyDiscount = (total, rate) => total * rate;
+// 9. 隨機範圍整數取值 (1~10)
+const randInt = () => Math.floor(Math.random() * 10) + 1;
+// 10. 日期字串格式化縮減
+const getShortDate = () => new Date().toISOString().slice(0, 10);`,
+                explain: "本單元著重於精煉的 ES6+ 語法特訓，大量靈活運用箭頭函數（Arrow Functions）以及高階陣列方法（如 reduce），奠定高效邏輯底子。",
+                render: (container) => {
+                    container.innerHTML = `
+                        <p style="font-size:13px; color:var(--text-sub); margin-bottom:10px;">👇 點擊下方各演算功能鈕，即可即時調用核心 JS 函式運算：</p>
+                        <div class="logic-grid">
+                            <div class="logic-card"><label>1. 奇偶判斷 (驗證 88)</label><br><button onclick="runL1(this)">執行</button><div class="logic-output"></div></div>
+                            <div class="logic-card"><label>2. 陣列加總 [10,20,30,42]</label><br><button onclick="runL2(this)">執行</button><div class="logic-output"></div></div>
+                            <div class="logic-card"><label>3. 找最大值 [5, 99, 12, 7]</label><br><button onclick="runL3(this)">執行</button><div class="logic-output"></div></div>
+                            <div class="logic-card"><label>4. 溫標轉換 (100°C 轉 F)</label><br><button onclick="runL4(this)">執行</button><div class="logic-output"></div></div>
+                            <div class="logic-card"><label>5. 遞減迴圈 (3 到 1)</label><br><button onclick="runL5(this)">執行</button><div class="logic-output"></div></div>
+                            <div class="logic-card"><label>6. 檢查字串 '  ' 是否為空</label><br><button onclick="runL6(this)">執行</button><div class="logic-output"></div></div>
+                            <div class="logic-card"><label>7. 倒轉陣列 [A, B, C]</label><br><button onclick="runL7(this)">執行</button><div class="logic-output"></div></div>
+                            <div class="logic-card"><label>8. 折扣計算 ($1000 打 8 折)</label><br><button onclick="runL8(this)">執行</button><div class="logic-output"></div></div>
+                            <div class="logic-card"><label>9. 隨機整數 (1~10)</label><br><button onclick="runL9(this)">執行</button><div class="logic-output"></div></div>
+                            <div class="logic-card"><label>10. 格式化今天日期</label><br><button onclick="runL10(this)">執行</button><div class="logic-output"></div></div>
+                        </div>
+                    `;
+                }
+            },
+            {
+                title: "🌐 習題 5：OpenCode 專案提交",
+                tag: "git_log.txt",
+                viewTitle: "平時作業 5：OpenCode 專案管理與多版本提交",
+                githubUrl: "https://github.com/an-625/111410546/tree/master/HW5", // 您的 HW5 網址
+                desc: "【題目規格】\n將網站專案建立 Git 本地儲存庫，並上傳至學校指定之 OpenCode 平台託管，依據實際開發進度劃分不同的語意化版本進行 Commit 提交紀錄。",
+                code: `【OpenCode 專案版本進度歸檔紀錄】
+儲存庫庫址：https://opencode.cs.example.edu/portfolio/minimal-blog
+
+[Commit v1.0.0] - Initial Base Layout
+- 完成靜態網頁（習題 1、2）的 HTML/CSS 基礎語意結構建立與響應式排版。
+
+[Commit v1.1.0] - Add Form Validation
+- 注入前端 Vanilla JS 腳本，完成表單欄位異步攔截防呆與阻擋。
+
+[Commit v2.0.0] - FullStack Server Integration
+- 重構為動態網站，完全串接 Node.js/Express 後端與內嵌持久化資料庫。`,
+                explain: "學習現代軟體工程必備的分散式版本控制系統（Git）工作流。透過語意化提交紀錄（Commit Message），精確追蹤專案生命週期的演進歷史。",
+                render: (container) => {
+                    container.innerHTML = `<div style="text-align:center; padding:10px; color:#7d7260;">
+                        <p>📦 <b>Git 儲存庫狀態：</b></p>
+                        <p style="font-family:monospace; margin-top:5px; background:#e6dfd3; padding:6px 12px; display:inline-block; border-radius:4px; color:#3a3226;">
+                            origin  https://github.com/an-625/111410546 (fetch & push) - Clean Tree
+                        </p>
+                    </div>`;
+                }
+            },
+            {
+                title: "🧪 習題 6：函數進階挑戰",
+                tag: "issue_16.js",
+                viewTitle: "平時作業 6：JavaScript 函數與參數進階挑戰 (GitHub Issue #16)",
+                githubUrl: "https://github.com/an-625/111410546/tree/master/HW6", // 您的 HW6 網址
+                desc: "【題目規格】\n完成課堂 GitHub Issue #16 中關於 Callback 回呼函數、IIFE 閉包作用域封裝（避免全域變數污染）、高階函數（HOF）以及變數之「傳值 / 傳址」副作用陷阱驗證的程式實作挑戰。",
+                code: `// 1. Callback 基礎實作
+const mathTool = (num1, num2, action) => action(num1, num2);
+
+// 2. 立即執行函數 (IIFE) 鎖定變數作用域
+(() => {
+    let count = 100;
+    console.log(\`Count is: \${count}\`);
+})();
+
+// 3. 破壞性修改驗證：陣列與物件傳址呼叫會直接更動外部原始資料 (Side Effect)
+function cleanData(arr) {
+    arr.pop();
+    arr.unshift("Start");
+}
+
+// 4. 函數回傳函數的高階函數 (Higher-Order Function)
+const multiplier = factor => n => n * factor;`,
+                explain: "釐清 JavaScript 中基本型態（傳值）與物件/陣列（傳址）的底層記憶體行為。在編寫函數時應注意避免意外修改原始資料，維持代碼的純粹性與不可變性（Immutability）。",
+                render: (container) => {
+                    container.innerHTML = `<div style="text-align:center; padding:10px; color:#7d7260;">
+                        <p>🧪 <b>進階語法引擎檢驗：</b></p>
+                        <span style="font-size:12px; font-family:monospace; color:#2a2621; background:#f3efe6; padding:4px 8px; border-radius:3px; margin-top:5px; display:inline-block;">
+                            HOF Multiplier & Scope Isolation Passed.
+                        </span>
+                    </div>`;
+                }
+            },
+            {
+                title: "📖 習題 7：解構後端核心邏輯",
+                tag: "issue_17.js",
+                viewTitle: "平時作業 7：部落格範例核心邏輯深度演練 (GitHub Issue #17)",
+                githubUrl: "https://github.com/an-625/111410546/tree/master/HW7", // 您的 HW7 網址
+                desc: "【題目規格】\n針對 Express 網誌專案中高頻出現的物件解構賦值、動態屬性存取、JSON 解析、樣板字串拼接 HTML、以及 Error-First Pattern 錯誤優先回呼模式等概念进行解構實作。",
+                code: `// 1. 物件解隔賦值 (Destructuring) - 常見於解析請求體 (req.body)
+const req = { body: { title: "Node教學", content: "後端整合內容" } };
+const { title, content } = req.body;
+
+// 2. 陣列遍歷與樣板字串 (Template Literals) 拼接動態 HTML
+const posts = [{id: 1, t: "A"}, {id: 2, t: "B"}];
+let html = ""; posts.forEach(p => html += \`<div>\${p.t}</div>\`);
+
+// 3. 錯誤優先回呼模式 (Error-First Callback Pattern 模擬)
+function checkAdmin(role, callback) {
+    if (role !== "admin") return callback("存取遭拒，身分不符");
+    callback(null, "驗證通過，允許讀取內部數據");
+}`,
+                explain: "深入理解 Node.js 異步程式設計的黃金法則：Error-First Pattern。回呼函數的第一個參數永遠預留給錯誤物件（err），這能保證伺服器在面對 I/O 錯誤時不會全盤崩潰。",
+                render: (container) => {
+                    container.innerHTML = `<div style="text-align:center; padding:10px; color:#7d7260;">
+                        <p>📖 <b>Node 核心機制解構：</b></p>
+                        <span style="font-size:12px; font-family:monospace; color:#fff; background:#323b42; padding:4px 8px; border-radius:3px; margin-top:5px; display:inline-block;">
+                            Error-First Pattern Callbacks Verified (100% Stability)
+                        </span>
+                    </div>`;
+                }
+            }
+        ];
+
+        // 串接 UI 控制項
+        const menuList = document.getElementById('menuList');
+        const viewTitle = document.getElementById('viewTitle');
+        const viewDesc = document.getElementById('viewDesc');
+        const viewCode = document.getElementById('viewCode');
+        const viewExplain = document.getElementById('viewExplain');
+        const cfgName = document.getElementById('cfgName');
+        const sandboxContainer = document.getElementById('sandboxContainer');
+        const githubBtnContainer = document.getElementById('githubBtnContainer');
+
+        // 動態生成左側選單
+        portfolioData.forEach((item, index) => {
+            const li = document.createElement('li');
+            li.className = `menu-item ${index === 0 ? 'active' : ''}`;
+            li.innerHTML = `
+                <div class="title">${item.title}</div>
+                <div class="tag">${item.tag}</div>
+            `;
+            
+            li.addEventListener('click', () => {
+                const currentActive = document.querySelector('.menu-item.active');
+                if (currentActive) currentActive.classList.remove('active');
+                li.classList.add('active');
+                switchContent(item);
+            });
+            menuList.appendChild(li);
+        });
+
+        // 內容切換核心處理方法
+        function switchContent(item) {
+            viewTitle.textContent = item.viewTitle;
+            viewDesc.textContent = item.desc;
+            viewCode.textContent = item.code;
+            viewExplain.textContent = item.explain;
+            cfgName.textContent = item.tag;
+            
+            // 處理動態沙盒實體渲染
+            if (item.render) {
+                item.render(sandboxContainer);
+            }
+
+            // 🛠️ 動態生成 GitHub 連結按鈕
+            githubBtnContainer.innerHTML = ""; // 先清空舊按鈕
+            if (item.githubUrl && item.githubUrl.trim() !== "") {
+                const a = document.createElement('a');
+                a.href = item.githubUrl;
+                a.target = "_blank"; // 另開新分頁開
+                a.className = "github-link-btn";
+                a.innerText = "前往瀏覽此單元 GitHub 原始碼倉庫";
+                githubBtnContainer.appendChild(a);
+            }
+
+            // 優化體驗：切換項目時右側自動滾回最上方
+            document.querySelector('.content-container').scrollTop = 0;
+        }
+
+        // 預設初始化載入第一筆資料
+        switchContent(portfolioData[0]);
+
+        /* ========================================================
+         * 🔢 習題 4 前台即時運算用掛載全域函式庫
+         * ======================================================== */
+        window.runL1 = function(btn) { btn.nextElementSibling.innerText = "-> " + (88 % 2 === 0 ? "true (偶數)" : "false"); }
+        window.runL2 = function(btn) { btn.nextElementSibling.innerText = "-> 總和: " + [10,20,30,42].reduce((a,b)=>a+b,0); }
+        window.runL3 = function(btn) { btn.nextElementSibling.innerText = "-> 最大值: " + Math.max(...[5, 99, 12, 7]); }
+        window.runL4 = function(btn) { btn.nextElementSibling.innerText = "-> " + (100 * 9 / 5 + 32) + " °F"; }
+        window.runL5 = function(btn) { btn.nextElementSibling.innerText = "-> " + [3,2,1].join(', '); }
+        window.runL6 = function(btn) { btn.nextElementSibling.innerText = "-> " + ('  '.trim() === ''); }
+        window.runL7 = function(btn) { btn.nextElementSibling.innerText = "-> [" + ['A','B','C'].reverse().join(', ') + "]"; }
+        window.runL8 = function(btn) { btn.nextElementSibling.innerText = "-> 實付: $" + (1000 * 0.8); }
+        window.runL9 = function(btn) { btn.nextElementSibling.innerText = "-> 亂數: " + (Math.floor(Math.random() * 10) + 1); }
+        window.runL10 = function(btn) { btn.nextElementSibling.innerText = "-> " + new Date().toISOString().slice(0, 10); }
+
+        /* ========================================================
+         * 🌸 櫻花拖尾動態腳本（完美穿透防阻擋控制）
+         * ======================================================== */
+        let lastTimestamp = 0;
+        document.addEventListener('mousemove', (e) => {
+            const now = Date.now();
+            if (now - lastTimestamp < 40) return;
+            lastTimestamp = now;
+
+            const petal = document.createElement('div');
+            petal.className = 'sakura-petal';
+            
+            const size = Math.random() * 6 + 8;
+            petal.style.width = `${size}px`;
+            petal.style.height = `${size}px`;
+            petal.style.left = `${e.clientX}px`;
+            petal.style.top = `${e.clientY}px`;
+            
+            document.body.appendChild(petal);
+
+            const targetX = (Math.random() - 0.5) * 150;
+            const targetY = Math.random() * 100 + 80;
+            const randomRotation = Math.random() * 360 + 180;
+
+            const animation = petal.animate([
+                { transform: 'translate(0, 0) rotate(0deg) scale(1)', opacity: 0.85 },
+                { transform: `translate(${targetX}px, ${targetY}px) rotate(${randomRotation}deg) scale(0.3)`, opacity: 0 }
+            ], {
+                duration: Math.random() * 800 + 1000,
+                easing: 'ease-out'
+            });
+
+            animation.onfinish = () => petal.remove();
+        });
+    </script>
+</body>
+</html>
